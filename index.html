@@ -192,7 +192,19 @@
             dienTichSuDung1: { "type": "STRING", "description": "Diện tích mục đích sử dụng đất 1." },
             nguonGocSuDung1: { "type": "STRING", "description": "Nguồn gốc sử dụng mục đích sử dụng đất 1." },
             hinhThucSuDung1: { "type": "STRING", "description": "Hình thức sử dụng 1 (Sử dụng riêng/chung)." },
-            thoiHanSuDung1: { "type": "STRING", "description": "Thời hạn sử dụng 1 (Lâu dài/Đến ngày...)." }
+            thoiHanSuDung1: { "type": "STRING", "description": "Thời hạn sử dụng 1 (Lâu dài/Đến ngày...)." },
+            // ĐA MỤC ĐÍCH 2 (Các trường mới được thêm)
+            mucDichSuDung2: { "type": "STRING", "description": "Mục đích sử dụng đất 2." },
+            dienTichSuDung2: { "type": "STRING", "description": "Diện tích mục đích sử dụng đất 2." },
+            nguonGocSuDung2: { "type": "STRING", "description": "Nguồn gốc sử dụng mục đích sử dụng đất 2." },
+            hinhThucSuDung2: { "type": "STRING", "description": "Hình thức sử dụng 2 (Sử dụng riêng/chung)." },
+            thoiHanSuDung2: { "type": "STRING", "description": "Thời hạn sử dụng 2 (Lâu dài/Đến ngày...)." },
+            // ĐA MỤC ĐÍCH 3 (Các trường mới được thêm)
+            mucDichSuDung3: { "type": "STRING", "description": "Mục đích sử dụng đất 3." },
+            dienTichSuDung3: { "type": "STRING", "description": "Diện tích mục đích sử dụng đất 3." },
+            nguonGocSuDung3: { "type": "STRING", "description": "Nguồn gốc sử dụng mục đích sử dụng đất 3." },
+            hinhThucSuDung3: { "type": "STRING", "description": "Hình thức sử dụng 3 (Sử dụng riêng/chung)." },
+            thoiHanSuDung3: { "type": "STRING", "description": "Thời hạn sử dụng 3 (Lâu dài/Đến ngày...)." }
         };
 
         const SYSTEM_PROMPT = "Bạn là một công cụ trích xuất dữ liệu chính xác từ tài liệu. Hãy trích xuất tất cả các trường dữ liệu được yêu cầu từ ảnh tài liệu được cung cấp. Đảm bảo dữ liệu đầu ra tuân thủ chính xác định dạng JSON được cung cấp.";
@@ -224,7 +236,17 @@
             dienTichSuDung1: "Diện tích mục đích SD 1",
             nguonGocSuDung1: "Nguồn gốc sử dụng mục đích SD 1",
             hinhThucSuDung1: "Hình thức sử dụng 1",
-            thoiHanSuDung1: "Thời hạn sử dụng 1"
+            thoiHanSuDung1: "Thời hạn sử dụng 1",
+            mucDichSuDung2: "Mục đích sử dụng đất 2",
+            dienTichSuDung2: "Diện tích mục đích SD 2",
+            nguonGocSuDung2: "Nguồn gốc sử dụng mục đích SD 2",
+            hinhThucSuDung2: "Hình thức sử dụng 2",
+            thoiHanSuDung2: "Thời hạn sử dụng 2",
+            mucDichSuDung3: "Mục đích sử dụng đất 3",
+            dienTichSuDung3: "Diện tích mục đích SD 3",
+            nguonGocSuDung3: "Nguồn gốc sử dụng mục đích SD 3",
+            hinhThucSuDung3: "Hình thức sử dụng 3",
+            thoiHanSuDung3: "Thời hạn sử dụng 3"
         };
 
         // --- HÀM CẬP NHẬT GIAO DIỆN BƯỚC QUY TRÌNH ---
@@ -557,7 +579,9 @@
                 'soPhatHanhGCN', 'ngayCapGCN', 'soVaoSoGCN', 
                 'hoTenChuSuDung', 'ngaySinhChuSuDung', 'gioiTinh', 'soDinhDanhCCCD', 'diaChiThuongTru', 'tenToChuc',
                 'soHieuToBanDo', 'soThuTuThuaDat', 'diaChiThuaDat', 'dienTichThuaDat',
-                'mucDichSuDung1', 'dienTichSuDung1', 'nguonGocSuDung1', 'hinhThucSuDung1', 'thoiHanSuDung1'
+                'mucDichSuDung1', 'dienTichSuDung1', 'nguonGocSuDung1', 'hinhThucSuDung1', 'thoiHanSuDung1',
+                'mucDichSuDung2', 'dienTichSuDung2', 'nguonGocSuDung2', 'hinhThucSuDung2', 'thoiHanSuDung2',
+                'mucDichSuDung3', 'dienTichSuDung3', 'nguonGocSuDung3', 'hinhThucSuDung3', 'thoiHanSuDung3'
             ];
 
             orderKeys.forEach(key => {
@@ -631,7 +655,9 @@
                 'soPhatHanhGCN', 'ngayCapGCN', 'soVaoSoGCN', 
                 'hoTenChuSuDung', 'ngaySinhChuSuDung', 'gioiTinh', 'soDinhDanhCCCD', 'diaChiThuongTru', 'tenToChuc',
                 'soHieuToBanDo', 'soThuTuThuaDat', 'diaChiThuaDat', 'dienTichThuaDat',
-                'mucDichSuDung1', 'dienTichSuDung1', 'nguonGocSuDung1', 'hinhThucSuDung1', 'thoiHanSuDung1'
+                'mucDichSuDung1', 'dienTichSuDung1', 'nguonGocSuDung1', 'hinhThucSuDung1', 'thoiHanSuDung1',
+                'mucDichSuDung2', 'dienTichSuDung2', 'nguonGocSuDung2', 'hinhThucSuDung2', 'thoiHanSuDung2',
+                'mucDichSuDung3', 'dienTichSuDung3', 'nguonGocSuDung3', 'hinhThucSuDung3', 'thoiHanSuDung3'
             ];
             
             // Tạo Header (tiếng Việt)
