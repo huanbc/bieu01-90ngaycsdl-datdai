@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hỗ Trợ Nhập Liệu Biểu 01 - Chiến Dịch 90 Ngày Đêm</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Thư viện PDF.js để xử lý file PDF trên trình duyệt -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.js"></script>
     <style>
         body {
@@ -73,22 +72,17 @@
 <body class="p-4 md:p-8">
 
     <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-2xl">
-        <!-- Đã sửa tiêu đề -->
         <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Hỗ Trợ Nhập Liệu Biểu Mẫu 01 - Chiến Dịch 90 Ngày Đêm</h1>
         <p class="text-center text-gray-500 mb-8">Quy trình 2 bước: Quét CCCD và GCN. Dữ liệu sẽ được tự động tích lũy vào danh sách và cho phép xuất file Excel tổng hợp.</p>
         
-        <!-- Khu vực tải ảnh -->
         <div class="mb-6 p-4 border-2 border-dashed border-indigo-200 rounded-lg text-center">
             <label for="imageUpload" class="block text-lg font-medium text-gray-700 mb-3">1. Tải Ảnh Tài Liệu Lên</label>
-            <!-- Cho phép cả image/* và .pdf -->
             <input type="file" id="imageUpload" accept="image/*, .pdf" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150">
             <img id="imagePreview" class="mt-4 mx-auto max-h-64 object-contain rounded-lg shadow-md" style="display:none;" alt="Ảnh xem trước">
             <p id="uploadHint" class="mt-2 text-sm text-gray-500 italic">
-                <!-- Gợi ý sẽ được cập nhật bằng JS -->
-            </p>
+                </p>
         </div>
 
-        <!-- Khu vực trạng thái và điều khiển bước -->
         <div class="mb-6 p-4 border border-gray-200 rounded-lg">
             <h2 class="text-lg font-semibold text-gray-700 mb-3 flex justify-between items-center">
                 Trạng Thái Quy Trình
@@ -98,12 +92,10 @@
             <div id="statusGcn" class="text-gray-400">Bước 2: Quét GCN QSDĐ - <span class="text-red-500 font-medium">Chưa hoàn thành</span></div>
         </div>
 
-        <!-- Nút xử lý (Dynamic) -->
         <button id="processButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-150 disabled:opacity-50" disabled>
             2. (Bước 1) Bắt đầu Quét CCCD/CMND
         </button>
         
-        <!-- Thông báo và Loading -->
         <div id="loadingIndicator" class="mt-4 hidden p-4 bg-yellow-50 text-yellow-700 rounded-lg shadow-inner flex items-center justify-center">
             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-yellow-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -113,12 +105,10 @@
         </div>
         <div id="resultMessage" class="mt-4 p-4 rounded-lg text-sm hidden"></div>
 
-        <!-- Khu vực hiển thị kết quả có thể chỉnh sửa và xuất CSV -->
         <div id="dataOutput" class="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner hidden">
             <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">3. Xem Lại và Chỉnh Sửa Dữ Liệu</h2>
             <div id="editableTable" class="overflow-x-auto space-y-4">
-                <!-- Biểu mẫu có thể chỉnh sửa sẽ được chèn vào đây -->
-            </div>
+                </div>
             
             <div class="mt-6 flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
                 <button id="addToListButton" class="w-full md:w-1/2 btn-continue font-bold py-3 px-4 rounded-xl shadow-lg transition duration-150 disabled:opacity-50" disabled>
@@ -130,7 +120,6 @@
             </div>
         </div>
         
-        <!-- Footer mới -->
         <div class="app-footer text-center">
             Tác giả: **Lê Minh Huấn** - CN VPĐKĐĐ 8 Quảng Ninh - Hỗ trợ bởi AI
         </div>
@@ -304,10 +293,9 @@
             return null;
         }
 
-        // --- HÀM XỬ LÝ FILE PDF THÀNH ẢNH BASE64 ---
+        // --- HÀM XỬ LÝ FILE PDF THÀNH ẢNH BASE64 (ĐÃ CHỈNH SỬA) ---
         async function renderPdfToImage(file) {
             const pdfjsLib = window['pdfjs-dist/build/pdf'];
-            // Thiết lập workerSrc từ CDN
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.js';
 
             const reader = new FileReader();
@@ -317,26 +305,48 @@
                         const pdfData = new Uint8Array(event.target.result);
                         const loadingTask = pdfjsLib.getDocument({ data: pdfData });
                         const pdf = await loadingTask.promise;
-                        const page = await pdf.getPage(1); // Chỉ lấy trang đầu tiên
-
-                        const scale = 2.0; // Tăng scale để có độ phân giải cao hơn cho OCR
-                        const viewport = page.getViewport({ scale: scale });
-
-                        // Tạo canvas ẩn để render
-                        const canvas = document.createElement('canvas');
-                        const context = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        const renderContext = {
-                            canvasContext: context,
-                            viewport: viewport
-                        };
-
-                        await page.render(renderContext).promise;
                         
-                        // Chuyển canvas thành JPEG Base64 data để gửi API
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        const scale = 2.0;
+                        const canvasList = [];
+                        let totalHeight = 0;
+                        let maxWidth = 0;
+
+                        // Render từng trang
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const viewport = page.getViewport({ scale: scale });
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+
+                            await page.render(renderContext).promise;
+                            canvasList.push(canvas);
+                            totalHeight += viewport.height;
+                            if (viewport.width > maxWidth) {
+                                maxWidth = viewport.width;
+                            }
+                        }
+
+                        // Ghép các canvas lại thành một canvas duy nhất
+                        const combinedCanvas = document.createElement('canvas');
+                        const combinedContext = combinedCanvas.getContext('2d');
+                        combinedCanvas.width = maxWidth;
+                        combinedCanvas.height = totalHeight;
+
+                        let yOffset = 0;
+                        for (const canvas of canvasList) {
+                            combinedContext.drawImage(canvas, 0, yOffset);
+                            yOffset += canvas.height;
+                        }
+                        
+                        // Chuyển canvas đã ghép thành JPEG Base64 data
+                        const dataUrl = combinedCanvas.toDataURL('image/jpeg', 0.9);
                         resolve(dataUrl.split(',')[1]);
 
                     } catch (e) {
@@ -369,7 +379,7 @@
                 processButton.disabled = true;
                 loadingIndicator.classList.remove('hidden');
                 imagePreview.style.display = 'none'; // Không thể xem trước PDF trực tiếp
-                resultMessage.textContent = "Đang xử lý file PDF (Trích xuất trang 1)...";
+                resultMessage.textContent = "Đang xử lý file PDF (Ghép tất cả các trang)...";
                 resultMessage.className = "mt-4 p-4 bg-yellow-100 text-yellow-700 rounded-lg shadow-inner";
                 resultMessage.classList.remove('hidden');
 
