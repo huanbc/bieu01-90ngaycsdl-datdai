@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hỗ Trợ Nhập Liệu Biểu 01 - Chiến Dịch 90 Ngày Đêm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thư viện PDF.js để xử lý file PDF trên trình duyệt -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Đảm bảo bảng hiển thị đúng trong khung */
+        .min-w-full {
+            min-width: 100%;
+        }
+        /* Style cho input chỉnh sửa */
+        .data-input {
+            transition: all 0.15s;
+            background-color: #ffffff; /* Nền trắng cho input để dễ chỉnh sửa */
+        }
+        /* Style cho nút tiếp tục */
+        .btn-continue {
+            background-color: #f59e0b;
+            color: white;
+            transition: background-color 0.15s;
+        }
+        .btn-continue:hover {
+            background-color: #d97706;
+        }
+        /* Style cho footer */
+        .app-footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+    </style>
+
+    <script>
+        // --- CHẶN XEM MÃ NGUỒN (BEST EFFORT) ---
+        
+        // Chặn click chuột phải (ngăn mở menu ngữ cảnh chứa "Xem mã nguồn")
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            console.warn("Mã nguồn ứng dụng này được bảo vệ. Vui lòng không sao chép hoặc phân phối.");
+        });
+
+        // Chặn các phím tắt F12, Ctrl+Shift+I/J, Ctrl+U
+        document.addEventListener('keydown', (e) => {
+            // F12
+            if (e.key === 'F12') {
+                e.preventDefault();
+                console.warn("Mã nguồn ứng dụng này được bảo vệ. Vui lòng không sao chép hoặc phân phối.");
+            }
+            // Ctrl+Shift+I/J (Developer Tools)
+            if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) {
+                e.preventDefault();
+                console.warn("Mã nguồn ứng dụng này được bảo vệ. Vui lòng không sao chép hoặc phân phối.");
+            }
+            // Ctrl+U (View Source)
+            if (e.ctrlKey && e.key === 'U') {
+                e.preventDefault();
+                console.warn("Mã nguồn ứng dụng này được bảo vệ. Vui lòng không sao chép hoặc phân phối.");
+            }
+        });
+        // --- KẾT THÚC CHẶN XEM MÃ NGUỒN ---
+    </script>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-2xl">
+        <!-- Đã sửa tiêu đề -->
+        <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Hỗ Trợ Nhập Liệu Biểu Mẫu 01 - Chiến Dịch 90 Ngày Đêm</h1>
+        <p class="text-center text-gray-500 mb-8">Quy trình 2 bước: Quét CCCD và GCN. Dữ liệu sẽ được tự động tích lũy vào danh sách và cho phép xuất file Excel tổng hợp.</p>
+        
+        <!-- Khu vực tải ảnh -->
+        <div class="mb-6 p-4 border-2 border-dashed border-indigo-200 rounded-lg text-center">
+            <label for="imageUpload" class="block text-lg font-medium text-gray-700 mb-3">1. Tải Ảnh Tài Liệu Lên</label>
+            <!-- Cho phép cả image/* và .pdf -->
+            <input type="file" id="imageUpload" accept="image/*, .pdf" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition duration-150">
+            <img id="imagePreview" class="mt-4 mx-auto max-h-64 object-contain rounded-lg shadow-md" style="display:none;" alt="Ảnh xem trước">
+            <p id="uploadHint" class="mt-2 text-sm text-gray-500 italic">
+                <!-- Gợi ý sẽ được cập nhật bằng JS -->
+            </p>
+        </div>
+
+        <!-- Khu vực trạng thái và điều khiển bước -->
+        <div class="mb-6 p-4 border border-gray-200 rounded-lg">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 flex justify-between items-center">
+                Trạng Thái Quy Trình
+                <span id="recordCount" class="text-sm font-normal text-indigo-600">Đã nhập: 0 hồ sơ</span>
+            </h2>
+            <div id="statusCccd" class="text-gray-900 mb-2">Bước 1: Quét CCCD/CMND - <span class="text-red-500 font-medium">Chưa hoàn thành</span></div>
+            <div id="statusGcn" class="text-gray-400">Bước 2: Quét GCN QSDĐ - <span class="text-red-500 font-medium">Chưa hoàn thành</span></div>
+        </div>
+
+        <!-- Nút xử lý (Dynamic) -->
+        <button id="processButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-150 disabled:opacity-50" disabled>
+            2. (Bước 1) Bắt đầu Quét CCCD/CMND
+        </button>
+        
+        <!-- Thông báo và Loading -->
+        <div id="loadingIndicator" class="mt-4 hidden p-4 bg-yellow-50 text-yellow-700 rounded-lg shadow-inner flex items-center justify-center">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-yellow-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Đang gửi ảnh đến AI... Vui lòng chờ vài giây.
+        </div>
+        <div id="resultMessage" class="mt-4 p-4 rounded-lg text-sm hidden"></div>
+
+        <!-- Khu vực hiển thị kết quả có thể chỉnh sửa và xuất CSV -->
+        <div id="dataOutput" class="mt-8 p-6 bg-gray-50 rounded-xl shadow-inner hidden">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">3. Xem Lại và Chỉnh Sửa Dữ Liệu</h2>
+            <div id="editableTable" class="overflow-x-auto space-y-4">
+                <!-- Biểu mẫu có thể chỉnh sửa sẽ được chèn vào đây -->
+            </div>
+            
+            <div class="mt-6 flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <button id="addToListButton" class="w-full md:w-1/2 btn-continue font-bold py-3 px-4 rounded-xl shadow-lg transition duration-150 disabled:opacity-50" disabled>
+                    Thêm Vào Danh Sách & Tiếp Tục (Quay về B1)
+                </button>
+                <button id="downloadAllButton" class="w-full md:w-1/2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition duration-150 disabled:opacity-50" disabled>
+                    4. Tải Về Toàn Bộ Danh Sách CSV (<span id="downloadCount">0</span> hồ sơ)
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer mới -->
+        <div class="app-footer text-center">
+            Tác giả: **Lê Minh Huấn** - CN VPĐKĐĐ 8 Quảng Ninh - Hỗ trợ bởi AI
+        </div>
+
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const imagePreview = document.getElementById('imagePreview');
+        const processButton = document.getElementById('processButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const resultMessage = document.getElementById('resultMessage');
+        const dataOutput = document.getElementById('dataOutput');
+        const editableTable = document.getElementById('editableTable');
+        const statusCccd = document.getElementById('statusCccd');
+        const statusGcn = document.getElementById('statusGcn');
+        const uploadHint = document.getElementById('uploadHint');
+        const addToListButton = document.getElementById('addToListButton');
+        const downloadAllButton = document.getElementById('downloadAllButton');
+        const recordCount = document.getElementById('recordCount');
+        const downloadCount = document.getElementById('downloadCount');
+        
+        // --- TRẠNG THÁI ỨNG DỤNG VÀ DỮ LIỆU ---
+        let base64Image = null; // Dữ liệu ảnh/PDF đã chuyển đổi sang Base64
+        let cccdData = null; // Dữ liệu CCCD (tạm)
+        let gcnData = null;  // Dữ liệu GCN (tạm)
+        let currentStep = 'CCCD'; // Bắt đầu bằng CCCD
+        let allRecords = []; // MẢNG LỚN LƯU TRỮ TẤT CẢ CÁC HỒ SƠ ĐÃ HOÀN THÀNH
+        
+        const API_KEY = "";
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+        const MAX_RETRIES = 5;
+
+        // --- SCHEMAS ĐỊNH NGHĨA CHO TỪNG LOẠI TÀI LIỆU ---
+        // (CCCD SCHEMA)
+        const CCCD_SCHEMA_PROPERTIES = {
+            tenTaiLieu: { "type": "STRING", "description": "Tên tài liệu: Căn cước công dân." },
+            soCCCD: { "type": "STRING", "description": "Số CCCD hoặc CMND." },
+            hoTen: { "type": "STRING", "description": "Họ và tên đầy đủ." },
+            ngaySinh: { "type": "STRING", "description": "Ngày, tháng, năm sinh (DD/MM/YYYY)." },
+            gioiTinh: { "type": "STRING", "description": "Giới tính." },
+            quocTich: { "type": "STRING", "description": "Quốc tịch." },
+            queQuan: { "type": "STRING", "description": "Quê quán." },
+            noiThuongTru: { "type": "STRING", "description": "Nơi thường trú." },
+            ngayCap: { "type": "STRING", "description": "Ngày cấp (DD/MM/YYYY)." },
+            noiCap: { "type": "STRING", "description": "Nơi cấp." }
+        };
+
+        // (GCN SCHEMA - BIỂU MẪU SỐ 01)
+        const GCN_SCHEMA_PROPERTIES = {
+            tenTaiLieu: { "type": "STRING", "description": "Tên tài liệu: Giấy Chứng Nhận Quyền Sử Dụng Đất (Sổ đỏ/Sổ hồng)." },
+            // THÔNG TIN GCN
+            soPhatHanhGCN: { "type": "STRING", "description": "Số phát hành GCN (Seri)." },
+            ngayCapGCN: { "type": "STRING", "description": "Ngày cấp giấy chứng nhận (DD/MM/YYYY)." },
+            soVaoSoGCN: { "type": "STRING", "description": "Số vào sổ cấp Giấy chứng nhận quyền sử dụng đất." },
+            // THÔNG TIN CHỦ SỬ DỤNG (Sẽ được điền từ CCCD nếu có)
+            hoTenChuSuDung: { "type": "STRING", "description": "Họ và tên chủ sử dụng." },
+            ngaySinhChuSuDung: { "type": "STRING", "description": "Ngày, tháng, năm sinh chủ sử dụng (DD/MM/YYYY)." },
+            gioiTinh: { "type": "STRING", "description": "Giới tính chủ sử dụng." },
+            soDinhDanhCCCD: { "type": "STRING", "description": "Số định danh cá nhân/CCCD của chủ sử dụng." },
+            diaChiThuongTru: { "type": "STRING", "description": "Địa chỉ thường trú của chủ sử dụng đất." },
+            tenToChuc: { "type": "STRING", "description": "Tên tổ chức (nếu chủ sử dụng là tổ chức). Để trống nếu là cá nhân." },
+            // THÔNG TIN THỬA ĐẤT
+            soHieuToBanDo: { "type": "STRING", "description": "Số hiệu tờ bản đồ." },
+            soThuTuThuaDat: { "type": "STRING", "description": "Số thứ tự thửa đất." },
+            diaChiThuaDat: { "type": "STRING", "description": "Địa chỉ thửa đất." },
+            dienTichThuaDat: { "type": "STRING", "description": "Diện tích thửa đất (Tổng)." },
+            // ĐA MỤC ĐÍCH 1 (Cột V, W, X, Y, Z trong biểu mẫu)
+            mucDichSuDung1: { "type": "STRING", "description": "Mục đích sử dụng đất 1." },
+            dienTichSuDung1: { "type": "STRING", "description": "Diện tích mục đích sử dụng đất 1." },
+            nguonGocSuDung1: { "type": "STRING", "description": "Nguồn gốc sử dụng mục đích sử dụng đất 1." },
+            hinhThucSuDung1: { "type": "STRING", "description": "Hình thức sử dụng 1 (Sử dụng riêng/chung)." },
+            thoiHanSuDung1: { "type": "STRING", "description": "Thời hạn sử dụng 1 (Lâu dài/Đến ngày...)." }
+        };
+
+        const SYSTEM_PROMPT = "Bạn là một công cụ trích xuất dữ liệu chính xác từ tài liệu. Hãy trích xuất tất cả các trường dữ liệu được yêu cầu từ ảnh tài liệu được cung cấp. Đảm bảo dữ liệu đầu ra tuân thủ chính xác định dạng JSON được cung cấp.";
+
+        // --- ÁNH XẠ TÊN TRƯỜNG TIẾNG VIỆT (Dùng cho GCN/Biểu mẫu 01) ---
+
+        const FIELD_NAMES_VN = {
+            // CCCD (chỉ dùng tạm trong state, không hiển thị trực tiếp)
+            tenTaiLieu: "Tên Tài Liệu",
+            soCCCD: "Số CCCD/CMND",
+            hoTen: "Họ và Tên (CCCD)",
+            ngaySinh: "Ngày/Tháng/Năm Sinh (CCCD)",
+            
+            // GCN QSDĐ (BIỂU MẪU SỐ 01) - Đây là các trường hiển thị và xuất CSV
+            soPhatHanhGCN: "Số phát hành GCN (Seri)",
+            ngayCapGCN: "Ngày cấp GCN",
+            soVaoSoGCN: "Số vào sổ GCN",
+            hoTenChuSuDung: "Họ và tên chủ sử dụng",
+            ngaySinhChuSuDung: "Ngày, tháng, năm sinh chủ SD",
+            gioiTinh: "Giới tính chủ SD",
+            soDinhDanhCCCD: "Số định danh cá nhân/CCCD",
+            diaChiThuongTru: "Địa chỉ thường trú",
+            tenToChuc: "Tên tổ chức (Nếu có)",
+            soHieuToBanDo: "Số hiệu tờ bản đồ",
+            soThuTuThuaDat: "Số thứ tự thửa đất",
+            diaChiThuaDat: "Địa chỉ thửa đất",
+            dienTichThuaDat: "Diện tích thửa đất (Tổng)",
+            mucDichSuDung1: "Mục đích sử dụng đất 1",
+            dienTichSuDung1: "Diện tích mục đích SD 1",
+            nguonGocSuDung1: "Nguồn gốc sử dụng mục đích SD 1",
+            hinhThucSuDung1: "Hình thức sử dụng 1",
+            thoiHanSuDung1: "Thời hạn sử dụng 1"
+        };
+
+        // --- HÀM CẬP NHẬT GIAO DIỆN BƯỚC QUY TRÌNH ---
+        function updateProcessUI() {
+            // Cập nhật trạng thái CCCD
+            if (cccdData) {
+                statusCccd.innerHTML = 'Bước 1: Quét CCCD/CMND - <span class="text-green-600 font-bold">HOÀN THÀNH</span>';
+                statusGcn.classList.remove('text-gray-400');
+                statusGcn.classList.add('text-gray-900');
+            } else {
+                statusCccd.innerHTML = 'Bước 1: Quét CCCD/CMND - <span class="text-red-500 font-medium">Chưa hoàn thành</span>';
+                statusGcn.classList.add('text-gray-400');
+                statusGcn.classList.remove('text-gray-900');
+            }
+
+            // Cập nhật trạng thái GCN
+            if (gcnData) {
+                statusGcn.innerHTML = 'Bước 2: Quét GCN QSDĐ - <span class="text-green-600 font-bold">HOÀN THÀNH</span>';
+            } else {
+                statusGcn.innerHTML = 'Bước 2: Quét GCN QSDĐ - <span class="text-red-500 font-medium">Chưa hoàn thành</span>';
+            }
+
+            // Cập nhật nút xử lý chính và Gợi ý tải ảnh
+            if (cccdData && gcnData) {
+                processButton.textContent = "2. (HOÀN TẤT) Xem Lại Biểu Mẫu Đã Ghép";
+                processButton.classList.remove('bg-indigo-600');
+                processButton.classList.add('bg-blue-600');
+                uploadHint.innerHTML = '🎉 Quy trình hoàn tất! Vui lòng kiểm tra Mục 3.';
+                // Tự động hiển thị kết quả sau khi GCN xong
+                mergeAndDisplayData(); 
+            } else if (cccdData) {
+                currentStep = 'GCN';
+                processButton.textContent = "2. (Bước 2) Bắt đầu Quét GCN QSDĐ";
+                processButton.classList.remove('bg-blue-600');
+                processButton.classList.add('bg-indigo-600');
+                uploadHint.innerHTML = '✅ Bước 1 hoàn tất. Vui lòng tải lên ảnh **Giấy chứng nhận QSDĐ** hoặc **file PDF** cho Bước 2.';
+            } else {
+                currentStep = 'CCCD';
+                processButton.textContent = "2. (Bước 1) Bắt đầu Quét CCCD/CMND";
+                processButton.classList.remove('bg-blue-600');
+                processButton.classList.add('bg-indigo-600');
+                uploadHint.innerHTML = '*Lưu ý: Vui lòng tải lên file ảnh (.jpg, .png) hoặc **file PDF** chứa **hai mặt** của CCCD/CMND cho Bước 1.';
+            }
+
+            // Cập nhật trạng thái nút tải về tổng hợp
+            downloadCount.textContent = allRecords.length;
+            recordCount.textContent = `Đã nhập: ${allRecords.length} hồ sơ`;
+            downloadAllButton.disabled = allRecords.length === 0;
+        }
+        
+        // --- CHỨC NĂNG LẤY SCHEMA VÀ PROMPT HIỆN TẠI ---
+        function getCurrentSchemaAndPrompt() {
+            if (currentStep === 'CCCD') {
+                return {
+                    schema: { type: "OBJECT", properties: CCCD_SCHEMA_PROPERTIES, required: ["soCCCD", "hoTen", "ngaySinh"] },
+                    prompt: "Trích xuất tất cả thông tin cơ bản trên Căn cước công dân này. Ảnh này có thể chứa cả mặt trước và mặt sau.",
+                    mimeType: "image/jpeg"
+                };
+            } else if (currentStep === 'GCN') {
+                return {
+                    schema: { type: "OBJECT", properties: GCN_SCHEMA_PROPERTIES, required: ["soPhatHanhGCN", "hoTenChuSuDung"] },
+                    prompt: "Trích xuất thông tin chi tiết về GCN QSDĐ, bao gồm số seri, ngày cấp, số tờ, số thửa, diện tích và chi tiết Mục đích sử dụng đất 1.",
+                    mimeType: "image/jpeg"
+                };
+            }
+            return null;
+        }
+
+        // --- HÀM XỬ LÝ FILE PDF THÀNH ẢNH BASE64 ---
+        async function renderPdfToImage(file) {
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            // Thiết lập workerSrc từ CDN
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.js';
+
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+                reader.onload = async function(event) {
+                    try {
+                        const pdfData = new Uint8Array(event.target.result);
+                        const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+                        const pdf = await loadingTask.promise;
+                        const page = await pdf.getPage(1); // Chỉ lấy trang đầu tiên
+
+                        const scale = 2.0; // Tăng scale để có độ phân giải cao hơn cho OCR
+                        const viewport = page.getViewport({ scale: scale });
+
+                        // Tạo canvas ẩn để render
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
+
+                        await page.render(renderContext).promise;
+                        
+                        // Chuyển canvas thành JPEG Base64 data để gửi API
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        resolve(dataUrl.split(',')[1]);
+
+                    } catch (e) {
+                        console.error("PDF rendering error:", e);
+                        reject("Không thể xử lý file PDF. Vui lòng đảm bảo file không bị mã hóa.");
+                    }
+                };
+                reader.onerror = (e) => reject(`Lỗi đọc file: ${e.message}`);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+
+        // --- XỬ LÝ TẢI FILE (IMAGE/PDF) VÀ BASE64 ---
+        imageUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                imagePreview.style.display = 'none';
+                processButton.disabled = true;
+                base64Image = null;
+                return;
+            }
+            
+            // Xóa thông báo cũ
+            resultMessage.classList.add('hidden');
+            
+            // Xử lý file
+            if (file.type === 'application/pdf') {
+                // Xử lý PDF
+                processButton.disabled = true;
+                loadingIndicator.classList.remove('hidden');
+                imagePreview.style.display = 'none'; // Không thể xem trước PDF trực tiếp
+                resultMessage.textContent = "Đang xử lý file PDF (Trích xuất trang 1)...";
+                resultMessage.className = "mt-4 p-4 bg-yellow-100 text-yellow-700 rounded-lg shadow-inner";
+                resultMessage.classList.remove('hidden');
+
+                try {
+                    base64Image = await renderPdfToImage(file);
+                    
+                    // Gán placeholder cho ảnh xem trước
+                    imagePreview.src = 'https://placehold.co/150x200/4f46e5/ffffff?text=PDF+Loaded';
+                    imagePreview.style.display = 'block';
+                    
+                    processButton.disabled = false;
+                    resultMessage.classList.add('hidden');
+
+                } catch (error) {
+                    console.error(error);
+                    resultMessage.textContent = `❌ Lỗi xử lý file PDF: ${error.message || error}`;
+                    resultMessage.className = "mt-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-inner";
+                    resultMessage.classList.remove('hidden');
+                    processButton.disabled = true;
+                } finally {
+                    loadingIndicator.classList.add('hidden');
+                }
+
+            } else if (file.type.startsWith('image/')) {
+                // Xử lý Image
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    base64Image = event.target.result.split(',')[1];
+                    imagePreview.src = event.target.result;
+                    imagePreview.style.display = 'block';
+                    processButton.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Loại file không hỗ trợ
+                resultMessage.textContent = "❌ Loại file không hỗ trợ. Vui lòng chọn ảnh (.jpg, .png) hoặc file PDF.";
+                resultMessage.className = "mt-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-inner";
+                resultMessage.classList.remove('hidden');
+                processButton.disabled = true;
+            }
+        });
+        
+        // --- LOGIC GỌI API VÀ LƯU TRỮ DỮ LIỆU ---
+        async function callGeminiAPI(retries = 0) {
+            if (!base64Image) {
+                resultMessage.textContent = "❌ Vui lòng tải ảnh/PDF lên trước khi quét.";
+                resultMessage.className = "mt-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-inner";
+                resultMessage.classList.remove('hidden');
+                return;
+            }
+
+            const current = getCurrentSchemaAndPrompt();
+            if (!current) return;
+
+            loadingIndicator.classList.remove('hidden');
+            resultMessage.classList.add('hidden');
+            processButton.disabled = true;
+            dataOutput.classList.add('hidden');
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: current.prompt },
+                            {
+                                inlineData: {
+                                    mimeType: current.mimeType, 
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }
+                ],
+                systemInstruction: {
+                    parts: [{ text: SYSTEM_PROMPT }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: current.schema
+                }
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 429 && retries < MAX_RETRIES) {
+                    const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return callGeminiAPI(retries + 1);
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) {
+                    throw new Error("API không trả về dữ liệu JSON hợp lệ.");
+                }
+
+                const extractedData = JSON.parse(jsonText);
+                
+                // LƯU DỮ LIỆU VÀ CHUYỂN BƯỚC
+                if (currentStep === 'CCCD') {
+                    cccdData = extractedData;
+                    currentStep = 'GCN';
+                    
+                    resultMessage.textContent = "✅ Quét CCCD thành công! Vui lòng TẢI ẢNH/PDF GCN LÊN và nhấn nút để sang Bước 2.";
+                    resultMessage.className = "mt-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-inner";
+                    imageUpload.value = ''; // Xóa file đã tải để yêu cầu tải ảnh mới
+                    imagePreview.style.display = 'none';
+                    base64Image = null;
+                } else if (currentStep === 'GCN') {
+                    gcnData = extractedData;
+                    // Tự động hiển thị kết quả sau khi GCN hoàn tất
+                    mergeAndDisplayData();
+                }
+                
+            } catch (error) {
+                console.error("Lỗi trích xuất dữ liệu:", error);
+                resultMessage.textContent = `❌ Lỗi: Không thể trích xuất dữ liệu. Vui lòng thử lại hoặc đảm bảo ảnh/PDF rõ nét. Chi tiết: ${error.message}`;
+                resultMessage.className = "mt-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-inner";
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                processButton.disabled = false;
+                updateProcessUI();
+            }
+        }
+
+        // --- HÀM GHÉP DỮ LIỆU VÀ HIỂN THỊ CUỐI CÙNG ---
+        function mergeAndDisplayData() {
+            if (!cccdData || !gcnData) {
+                resultMessage.textContent = "⚠️ Cần quét cả CCCD và GCN để tạo biểu mẫu hoàn chỉnh.";
+                resultMessage.className = "mt-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-inner";
+                resultMessage.classList.remove('hidden');
+                return {};
+            }
+
+            // 1. Sao chép dữ liệu GCN làm cơ sở
+            const finalData = { ...gcnData };
+
+            // 2. ƯU TIÊN DỮ LIỆU CÁ NHÂN TỪ CCCD
+            finalData.hoTenChuSuDung = cccdData.hoTen || finalData.hoTenChuSuDung;
+            finalData.ngaySinhChuSuDung = cccdData.ngaySinh || finalData.ngaySinhChuSuDung;
+            finalData.gioiTinh = cccdData.gioiTinh || finalData.gioiTinh;
+            finalData.soDinhDanhCCCD = cccdData.soCCCD || finalData.soDinhDanhCCCD;
+            finalData.diaChiThuongTru = cccdData.noiThuongTru || finalData.diaChiThuongTru;
+
+            // 3. Hiển thị dữ liệu đã ghép
+            displayEditableData(finalData);
+            
+            // Kích hoạt nút Thêm vào danh sách
+            addToListButton.disabled = false;
+
+            resultMessage.textContent = "✅ Ghép dữ liệu thành công! Vui lòng kiểm tra và chỉnh sửa trước khi Thêm vào danh sách.";
+            resultMessage.className = "mt-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-inner";
+            resultMessage.classList.remove('hidden');
+        }
+
+        // --- HÀM HIỂN THỊ DỮ LIỆU CÓ THỂ CHỈNH SỬA ---
+        function displayEditableData(data) {
+            dataOutput.classList.remove('hidden');
+            editableTable.innerHTML = '';
+            
+            let html = '';
+            
+            // Sắp xếp lại keys theo thứ tự logic của Biểu 01 để dễ kiểm tra
+            const orderKeys = [
+                'soPhatHanhGCN', 'ngayCapGCN', 'soVaoSoGCN', 
+                'hoTenChuSuDung', 'ngaySinhChuSuDung', 'gioiTinh', 'soDinhDanhCCCD', 'diaChiThuongTru', 'tenToChuc',
+                'soHieuToBanDo', 'soThuTuThuaDat', 'diaChiThuaDat', 'dienTichThuaDat',
+                'mucDichSuDung1', 'dienTichSuDung1', 'nguonGocSuDung1', 'hinhThucSuDung1', 'thoiHanSuDung1'
+            ];
+
+            orderKeys.forEach(key => {
+                if (FIELD_NAMES_VN.hasOwnProperty(key)) {
+                    const label = FIELD_NAMES_VN[key];
+                    const value = data[key] || "";
+                    
+                    // Thêm class đặc biệt để làm nổi bật các trường lấy từ CCCD
+                    const highlightClass = (key === 'hoTenChuSuDung' || key === 'ngaySinhChuSuDung' || key === 'soDinhDanhCCCD' || key === 'diaChiThuongTru' || key === 'gioiTinh') ? 'border-2 border-indigo-500 bg-indigo-50' : '';
+
+                    html += `
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center py-2 border-b border-gray-200">
+                            <label for="${key}" class="w-full sm:w-1/3 text-sm font-medium text-gray-900 mb-1 sm:mb-0">${label}</label>
+                            <input type="text" id="${key}" value="${value}" 
+                                class="data-input w-full sm:w-2/3 p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm ${highlightClass}"
+                                data-key="${key}" placeholder="Không tìm thấy/Vui lòng nhập">
+                        </div>
+                    `;
+                }
+            });
+            
+            editableTable.innerHTML = html;
+        }
+
+        // --- HÀM LẤY DỮ LIỆU ĐÃ CHỈNH SỬA ---
+        function getEditedData() {
+            const inputs = editableTable.querySelectorAll('.data-input');
+            const editedData = {};
+            
+            inputs.forEach(input => {
+                const key = input.getAttribute('data-key');
+                editedData[key] = input.value;
+            });
+            
+            return editedData;
+        }
+        
+        // --- HÀM THÊM VÀO DANH SÁCH & RESET ---
+        function addRecordAndReset() {
+            const finalRecord = getEditedData();
+            
+            // Thêm bản ghi đã chỉnh sửa vào mảng tổng hợp
+            allRecords.push(finalRecord);
+
+            // 1. Reset trạng thái tạm thời
+            cccdData = null;
+            gcnData = null;
+            base64Image = null;
+            
+            // 2. Reset UI về Bước 1
+            imageUpload.value = '';
+            imagePreview.style.display = 'none';
+            dataOutput.classList.add('hidden');
+            addToListButton.disabled = true;
+            editableTable.innerHTML = '';
+            
+            // 3. Thông báo và cập nhật UI
+            resultMessage.textContent = `✅ Đã thêm hồ sơ thứ ${allRecords.length} vào danh sách. Tiếp tục tải ảnh CCCD/PDF mới để nhập hồ sơ tiếp theo.`;
+            resultMessage.className = "mt-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-inner";
+            resultMessage.classList.remove('hidden');
+
+            updateProcessUI();
+        }
+
+        // --- HÀM TẠO CSV TỪ DANH SÁCH LỚN ---
+        function convertToCSV(records) {
+            if (!records || records.length === 0) return '';
+            
+            // Định nghĩa thứ tự Header dựa trên Biểu mẫu 01
+            const orderKeys = [
+                'soPhatHanhGCN', 'ngayCapGCN', 'soVaoSoGCN', 
+                'hoTenChuSuDung', 'ngaySinhChuSuDung', 'gioiTinh', 'soDinhDanhCCCD', 'diaChiThuongTru', 'tenToChuc',
+                'soHieuToBanDo', 'soThuTuThuaDat', 'diaChiThuaDat', 'dienTichThuaDat',
+                'mucDichSuDung1', 'dienTichSuDung1', 'nguonGocSuDung1', 'hinhThucSuDung1', 'thoiHanSuDung1'
+            ];
+            
+            // Tạo Header (tiếng Việt)
+            const headersVN = orderKeys.map(key => FIELD_NAMES_VN[key] || key);
+            let csv = headersVN.join(',') + '\n';
+            
+            // Thêm từng hàng dữ liệu
+            records.forEach(record => {
+                const rowData = orderKeys.map(key => {
+                    let value = record[key] || '';
+                    if (typeof value === 'string') {
+                        value = value.replace(/"/g, '""'); // Escape dấu ngoặc kép
+                        if (value.includes(',')) {
+                            value = `"${value}"`; // Bọc chuỗi có dấu phẩy
+                        }
+                    }
+                    return value;
+                });
+                csv += rowData.join(',') + '\n';
+            });
+
+            return csv;
+        }
+
+        function downloadAllRecordsCSV() {
+            if (allRecords.length === 0) {
+                alert("Danh sách trống. Vui lòng nhập ít nhất một hồ sơ.");
+                return;
+            }
+
+            const csvContent = convertToCSV(allRecords);
+
+            const docName = "Bieu_Mau_01_Tong_Hop";
+
+            const blob = new Blob(["\ufeff", csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            // Tạo link download ảo
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${docName}_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            resultMessage.textContent = `🎉 Đã tải về file CSV tổng hợp (${allRecords.length} hồ sơ)!`;
+            resultMessage.className = "mt-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-inner";
+        }
+
+        // --- ĐĂNG KÝ EVENTS ---
+        processButton.addEventListener('click', callGeminiAPI);
+        addToListButton.addEventListener('click', addRecordAndReset);
+        downloadAllButton.addEventListener('click', downloadAllRecordsCSV);
+        
+        // Khởi tạo UI ban đầu
+        updateProcessUI();
+    </script>
+</body>
+</html>
