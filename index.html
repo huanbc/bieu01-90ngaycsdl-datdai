@@ -678,7 +678,7 @@
             
             // Tạo Header (tiếng Việt)
             const headersVN = orderKeys.map(key => FIELD_NAMES_VN[key] || key);
-            let csv = headersVN.join(',') + '\n';
+            let csv = headersVN.join(';') + '\n';
             
             // Thêm từng hàng dữ liệu
             records.forEach(record => {
@@ -686,13 +686,13 @@
                     let value = record[key] || '';
                     if (typeof value === 'string') {
                         value = value.replace(/"/g, '""'); // Escape dấu ngoặc kép
-                        if (value.includes(',')) {
-                            value = `"${value}"`; // Bọc chuỗi có dấu phẩy
+                        if (value.includes(';')) {
+                            value = `"${value}"`; // Bọc chuỗi có dấu chấm phẩy
                         }
                     }
                     return value;
                 });
-                csv += rowData.join(',') + '\n';
+                csv += rowData.join(';') + '\n';
             });
 
             return csv;
